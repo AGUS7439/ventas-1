@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Registro de Inversión - Teléfonos</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bg:#0b1020; --card:#0f1626; --accent:#00ffd5; --muted:#93a2b8;
+      --glass: rgba(255,255,255,0.03);
+      --glass-2: rgba(255,255,255,0.02);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#e6f2ff;background:linear-gradient(135deg,#05060a 0%, #081025 50%, #00121a 100%);min-height:100vh}
+    .wrap{max-width:1200px;margin:28px auto;padding:12px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#7b61ff);display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,0.6);transform:rotate(-12deg)}
+    .logo svg{width:36px;height:36px;filter:drop-shadow(0 6px 14px rgba(123,97,255,0.18))}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:350px 1fr;gap:20px;margin-top:20px}
+    .card{background:linear-gradient(180deg,var(--card),rgba(255,255,255,0.02));border-radius:14px;padding:16px;box-shadow:0 6px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+    .panel-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .muted{color:var(--muted);font-size:13px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;margin-top:8px}
+    label:first-of-type{margin-top:0}
+    input[type=text], input[type=number], input[type=date], textarea, select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:#eaf6ff;font-size:14px}
+    input[type=file]{color:var(--muted)}
+    
+    /* --- Nuevos Estilos para Textarea --- */
+    textarea{resize:vertical;min-height:80px}
+
+    /* --- Estilos de Botones con Animación --- */
+    @keyframes float{
+      0%{transform:translateY(0)}
+      50%{transform:translateY(-3px)}
+      100%{transform:translateY(0)}
+    }
+    .btn{
+      display:inline-flex;gap:10px;align-items:center;padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#7b61ff);color:#021025;font-weight:700;cursor:pointer;font-size:14px;
+      transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+      animation: float 4s ease-in-out infinite;
+    }
+    .btn:hover{
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 25px rgba(0,255,213,0.22);
+    }
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);font-weight:600}
+    .btn.ghost:hover{
+      box-shadow: 0 4px 15px rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.03);
+    }
+    .btn.delete-sale{padding: 6px 10px; font-size: 12px; background: #e3342f; color: #fff; line-height: 1; margin: 0; display: inline-block; border-radius: 8px}
+    .btn.delete-sale:hover{
+      box-shadow: 0 4px 15px rgba(227, 52, 47, 0.3);
+    }
+    .btn:active{
+      transform: translateY(0);
+      box-shadow: none;
+    }
+    .btn[disabled]{
+      opacity: 0.5;
+      cursor: not-allowed;
+      animation: none;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* --- Notificaciones --- */
+    @keyframes fade-in-out{
+      0%{opacity:0;transform:translateY(20px)}
+      5%{opacity:1;transform:translateY(0)}
+      95%{opacity:1;transform:translateY(0)}
+      100%{opacity:0;transform:translateY(20px)}
+    }
+    #notification-container{
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column-reverse;
+      pointer-events: none;
+    }
+    .notification{
+      background: rgba(0, 255, 213, 0.08);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--accent);
+      color: #e6f2ff;
+      padding: 10px 18px;
+      border-radius: 10px;
+      margin-top: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      font-size: 14px;
+      font-weight: 600;
+      min-width: 200px;
+      animation: fade-in-out 3s forwards;
+      pointer-events: auto;
+    }
+    .notification.error{
+      background: rgba(227, 52, 47, 0.09);
+      border-color: #e3342f;
+    }
+    /* -------------------------------------- */
+
+    .stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+    .stat{flex:1;min-width:150px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.02)}
+    .stat .num{font-size:18px;font-weight:700}
+    .stat .label{font-size:12px;color:var(--muted)}
+    .inventory-list{margin-top:12px;display:grid;gap:10px}
+    .item{display:flex;gap:12px;align-items:center;padding:10px;border-radius:10px;background:var(--glass-2);border:1px solid rgba(255,255,255,0.02)}
+    .thumb{width:80px;height:80px;border-radius:8px;background:#07101a;display:grid;place-items:center;overflow:hidden;flex-shrink:0}
+    .thumb img{width:100%;height:100%;object-fit:cover}
+    .meta{flex:1;min-width:0}
+    .meta h4{margin:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .meta p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .actions{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:8px;text-align:left;border-bottom:1px dashed rgba(255,255,255,0.03)}
+    th{color:var(--muted);font-size:12px}
+    .futuristic{position:relative;overflow:hidden}
+    .futuristic:before{content:"";position:absolute;inset:-20% -40%;background:radial-gradient(closest-side,rgba(123,97,255,0.06),transparent 30%);transform:rotate(25deg);filter:blur(40px);pointer-events:none}
+    footer{margin-top:18px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+    @media (max-width:900px){
+      .grid{grid-template-columns:1fr;}
+      .wrap{padding:12px}
+      header{flex-direction:column;align-items:flex-start}
+      .logo{width:48px;height:48px}
+      .actions{flex-wrap:wrap;margin-top:8px}
+      .item{flex-wrap:wrap;}
+      .actions button{flex-grow:1;min-width:80px}
+      .brand{width:100%;justify-content:space-between}
+      header>div:last-child{width:100%;margin-top:12px;}
+      .card{padding:14px}
+    }
+    @media (max-width:450px){
+      .actions button{min-width:100%;}
+    }
+
+    /* --- Estilos del Modal/Lightbox --- */
+    .modal{
+      position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;
+      display:flex;align-items:center;justify-content:center;
+      opacity:0;visibility:hidden;transition:opacity 0.3s, visibility 0.3s;
+    }
+    .modal.is-open{opacity:1;visibility:visible}
+    .modal-content{
+      background:var(--card);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,0.8);
+      max-width:90%;max-height:90%;width:700px;
+      display:flex;flex-direction:column;
+    }
+    .modal-header{
+      display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid rgba(255,255,255,0.05);
+    }
+    .modal-header h3{margin:0;font-size:18px}
+    .modal-close-btn{
+      background:transparent;border:0;color:#e6f2ff;font-size:24px;cursor:pointer;line-height:1;padding:4px 8px;
+    }
+    .modal-body{overflow-y:hidden;padding:16px 0;flex-grow:1}
+    .carousel{
+      display:flex;overflow-x:scroll;scroll-snap-type:x mandatory;
+      padding:0 16px; /* padding para que se vea el snap */
+      -webkit-overflow-scrolling: touch; /* Para iOS */
+    }
+    .carousel-item{
+      flex-shrink:0;
+      width:calc(100% - 32px); /* Ancho del item menos el padding lateral */
+      scroll-snap-align: center;
+      display:flex;justify-content:center;align-items:center;
+      margin:0 16px;
+    }
+    .carousel-item img{
+      width:100%;height:auto;max-height:60vh;
+      object-fit:contain;
+      border-radius:10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12h16" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/><path d="M8 6h8v12H8z" stroke="#021025" stroke-width="0.8" fill="#021025" opacity="0.12"/></svg>
+        </div>
+        <div>
+          <h1>Control de Inversión - Teléfonos</h1>
+          <p class="lead">Administra compras, resguardos, ventas y ganancias. Datos guardados en tu navegador.</p>
+        </div>
+      </div>
+      <div>
+        <button class="btn" id="exportCsv">Exportar CSV</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <aside class="card futuristic">
+        <div class="panel-title">
+          <strong>Resumen & Configuración</strong>
+          <span class="muted">Datos locales</span>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Inversión inicial</div>
+            <div class="num" id="initialInvestmentDisplay">$36,760</div>
+          </div>
+          <div class="stat">
+            <div class="label">Gasto en compras</div>
+            <div class="num" id="totalInvested">$0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Ingresos por ventas</div>
+            <div class="num" id="totalSales">$0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Ganancia neta</div>
+            <div class="num" id="totalProfit">$0</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label for="initialInvestment">Inversión inicial (MXN)</label>
+          <input id="initialInvestment" type="number" value="36760" min="0" />
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label class="muted">Inversión restante</label>
+          <div id="remainingInvestment" style="font-weight:700;font-size:16px;margin-top:6px">$0</div>
+        </div>
+
+        <hr style="margin:14px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)" />
+
+        <div>
+          <strong class="muted">Opciones de Datos</strong>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" id="saveSettings">Guardar configuración</button>
+            <button class="btn ghost" id="clearData">Borrar todos los datos</button>
+          </div>
+        </div>
+
+        <hr style="margin:14px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)" />
+
+        <div>
+          <strong class="muted">Agregar teléfono (compra)</strong>
+          <label for="model">Modelo</label>
+          <input id="model" type="text" list="phoneModels" placeholder="Ej: iPhone 15 Pro Max" />
+          
+          <datalist id="phoneModels"></datalist>
+
+          <label for="imei">IMEI</label>
+          <input id="imei" type="text" placeholder="Ej: 351562123456789" />
+          <label for="buyPrice">Precio de compra (MXN)</label>
+          <input id="buyPrice" type="number" placeholder="0" />
+          <label for="buyDate">Fecha de compra</label>
+          <input id="buyDate" type="date" />
+          <label for="note">Descripción / Nota</label>
+          <textarea id="note" placeholder="Estado, accesorios, detalles..."></textarea>
+          <label for="photos">Fotos (subir, máx. 5)</label>
+          <input id="photos" type="file" accept="image/*" multiple />
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" id="addPhone">Registrar compra</button>
+            <button class="btn ghost" id="resetForm">Limpiar</button>
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        <div class="card futuristic">
+          <div class="panel-title"><strong>Inventario</strong><span class="muted">Teléfonos en stock y resguardos</span></div>
+          <div id="inventory" class="inventory-list"></div>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <div class="card futuristic">
+          <div class="panel-title"><strong>Gráfico de Ventas Mensuales</strong><span class="muted">Monto total vendido por mes</span></div>
+          <div style="padding: 10px; height:260px;">
+            <canvas id="salesChart" width="400" height="200" aria-label="Gráfico de ventas mensuales"></canvas>
+          </div>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <div class="card futuristic">
+          <div class="panel-title"><strong>Registro de Ventas</strong><span class="muted">Historial de ventas y ganancias</span></div>
+          <div style="overflow:auto;max-height:320px">
+            <table id="salesTable">
+              <thead><tr><th>Fecha</th><th>Modelo</th><th>IMEI</th><th>Precio venta</th><th>Precio compra</th><th>Ganancia</th><th>Acciones</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <div class="card futuristic">
+          <div class="panel-title"><strong>Exportar / Importar</strong><span class="muted">Respaldo de datos</span></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn" id="downloadBackup">Descargar respaldo (JSON)</button>
+            <label class="btn ghost" style="display:inline-flex;align-items:center;cursor:pointer"><input id="importFile" type="file" accept="application/json" style="display:none"/>Importar</label>
+            <button class="btn" id="clearPhotos">Limpiar fotos guardadas</button>
+          </div>
+        </div>
+
+        <footer>
+          <div>Enlaces sociales: <a id="igLink" href="#" target="_blank" style="color:var(--accent);text-decoration:none;margin-left:8px">Instagram</a> | <a id="ttLink" href="#" target="_blank" style="color:var(--accent);text-decoration:none;margin-left:8px">TikTok</a></div>
+          <div class="muted">Página local — datos en tu navegador</div>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+  <div id="notification-container" aria-live="polite"></div>
+
+  <template id="itemTpl">
+    <div class="item">
+      <div class="thumb"><img src="" alt="foto"/></div>
+      <div class="meta">
+        <h4></h4>
+        <p class="muted small"></p>
+        <p class="muted small2"></p>
+      </div>
+      <div class="actions">
+        <button class="btn sell">Vender</button>
+        <button class="btn ghost edit">Editar</button>
+        <button class="btn ghost delete">Eliminar</button>
+      </div>
+    </div>
+  </template>
+
+  <div id="photo-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Fotos del Teléfono</h3>
+        <button class="modal-close-btn" aria-label="Cerrar" id="close-modal-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="photo-carousel" class="carousel">
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Modelos Sugeridos ---
+    const IPHONE_MODELS = [
+      'iPhone 17 Pro Max', 'iPhone 17 Pro', 'iPhone 17 Air', 'iPhone 17', 
+      'iPhone 16 Pro Max', 'iPhone 16 Pro', 'iPhone 16 Plus', 'iPhone 16', 
+      'iPhone 15 Pro Max', 'iPhone 15 Pro', 'iPhone 15 Plus', 'iPhone 15', 
+      'iPhone 14 Pro Max', 'iPhone 14 Pro', 'iPhone 14 Plus', 'iPhone 14',
+      'iPhone 13 Pro Max', 'iPhone 13 Pro', 'iPhone 13', 'iPhone 13 mini',
+      'iPhone 12 Pro Max', 'iPhone 12 Pro', 'iPhone 12', 'iPhone 12 mini',
+      'iPhone 11 Pro Max', 'iPhone 11 Pro', 'iPhone 11',
+      'iPhone SE (3ra Gen)', 'iPhone XS Max', 'iPhone XR'
+    ];
+    
+    const SAMSUNG_ULTRA_MODELS = [
+      'Samsung S24 Ultra', 'Samsung S23 Ultra', 'Samsung S22 Ultra', 'Samsung S21 Ultra',
+      'Samsung Note 20 Ultra'
+    ];
+
+    const ALL_SUGGESTED_MODELS = [...IPHONE_MODELS, ...SAMSUNG_ULTRA_MODELS].sort();
+    
+    // Función para inyectar los modelos en el datalist
+    function loadModelSuggestions() {
+      const datalist = $('phoneModels');
+      datalist.innerHTML = '';
+      ALL_SUGGESTED_MODELS.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model;
+        datalist.appendChild(option);
+      });
+    }
+
+    // --- helpers ---
+    const $ = id => document.getElementById(id);
+    const money = v => '$' + Number(v||0).toLocaleString('es-MX');
+
+    function notify(message, isError = false) {
+      const container = $('notification-container');
+      const note = document.createElement('div');
+      note.className = 'notification' + (isError ? ' error' : '');
+      note.textContent = message;
+      container.appendChild(note);
+      // auto remove after animation (~3s)
+      setTimeout(() => { note.remove(); }, 3200);
+    }
+
+    // --- storage keys ---
+    const STORE = 'phone_inventory_v1';
+    const SETTINGS = 'phone_settings_v1';
+
+    // --- default socials ---
+    let DEFAULT_INSTAGRAM = 'https://www.instagram.com/iphon_eagus';
+    let DEFAULT_TIKTOK = 'https://www.tiktok.com/@apple_agus';
+
+    // --- state ---
+    let state = { initialInvestment:36760, phones:[], sales:[] };
+    let salesChart;
+    let editIndex = -1;
+
+    // --- load/save ---
+    function load(){
+      try{
+        const raw = localStorage.getItem(STORE);
+        if(raw){
+          const parsed = JSON.parse(raw);
+          state = {
+            initialInvestment: Number(parsed.initialInvestment || 0),
+            phones: Array.isArray(parsed.phones) ? parsed.phones : [],
+            sales: Array.isArray(parsed.sales) ? parsed.sales : []
+          };
+          // Asegurar que las compras antiguas tengan el campo 'note'
+          state.phones = state.phones.map(p => ({ ...p, note: p.note || '' }));
+        }
+      }catch(e){ console.error(e) }
+      // load settings links if exist
+      const st = localStorage.getItem(SETTINGS);
+      if(st){
+        try{
+          const s = JSON.parse(st);
+          if(s.instagram) DEFAULT_INSTAGRAM = s.instagram;
+          if(s.tiktok) DEFAULT_TIKTOK = s.tiktok;
+        }catch(e){}
+      }
+      $('initialInvestment').value = state.initialInvestment || 0;
+      loadModelSuggestions(); // Cargar sugerencias al iniciar
+      renderAll();
+    }
+
+    function save(){
+      try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e){ console.error('Save error', e); }
+    }
+
+    function saveSettings(){
+      const s = { instagram: DEFAULT_INSTAGRAM, tiktok: DEFAULT_TIKTOK };
+      localStorage.setItem(SETTINGS, JSON.stringify(s));
+      notify('Configuración guardada');
+      updateSocialLinks();
+    }
+
+    // --- rendering ---
+    function renderAll(){
+      renderInventory();
+      renderSales();
+      renderStats();
+      updateSocialLinks();
+      renderSalesChart();
+      updateAddButtonState();
+    }
+
+    function renderInventory(){
+      const cont = $('inventory'); cont.innerHTML='';
+      if(!state.phones.length){
+        cont.innerHTML='<div class="muted">No hay teléfonos registrados.</div>'; return;
+      }
+      state.phones.forEach((p,idx)=>{
+        const tpl = document.getElementById('itemTpl').content.cloneNode(true);
+        const imgContainer = tpl.querySelector('.thumb');
+        const img = tpl.querySelector('img');
+        img.src = p.photos && p.photos[0] ? p.photos[0] : placeholderData();
+        img.alt = p.model + ' foto';
+        
+        // Habilitar visor de fotos al hacer clic en la miniatura
+        if(p.photos && p.photos.length > 0){
+          imgContainer.style.cursor = 'zoom-in';
+          imgContainer.addEventListener('click', () => { openPhotoModal(p.model, p.photos); });
+        }
+
+        tpl.querySelector('h4').textContent = p.model + (p.sold? ' (VENDIDO)':'');
+        tpl.querySelector('.small').textContent = `IMEI: ${p.imei} • Compra: ${money(p.buyPrice)} • Fecha: ${p.buyDate||'-'}`;
+        // Mostrar la nota/descripción
+        const noteEl = tpl.querySelector('.small2');
+        noteEl.textContent = p.note||'';
+        if (!p.note) noteEl.style.display = 'none';
+
+        const del = tpl.querySelector('.delete');
+        del.addEventListener('click',()=>{
+          if(confirm('Eliminar registro de compra? También puedes eliminar ventas relacionadas si lo deseas.')){
+            const removeSales = confirm('¿Eliminar también las ventas relacionadas a este IMEI (si existen)?');
+            if(removeSales){
+              state.sales = state.sales.filter(s => s.imei !== p.imei);
+            }
+            state.phones.splice(idx,1);
+            save(); renderAll();
+            notify('Registro de compra eliminado.');
+          }
+        });
+        const edit = tpl.querySelector('.edit');
+        edit.addEventListener('click',()=>{ populateFormForEdit(idx); });
+        const sell = tpl.querySelector('.sell');
+        sell.addEventListener('click',()=>{ openSellDialog(idx); });
+        if(p.sold) sell.disabled=true;
+        cont.appendChild(tpl);
+      });
+    }
+
+    function renderSales(){
+      const tbody = document.querySelector('#salesTable tbody'); tbody.innerHTML='';
+      // Mapear ventas para obtener el índice original antes de ordenar
+      const salesWithIndex = state.sales.map((s, index) => ({ ...s, originalIndex: index }));
+      salesWithIndex.sort((a,b)=> new Date(b.date) - new Date(a.date));
+      salesWithIndex.forEach(s=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${s.date||''}</td>
+          <td>${escapeHtml(s.model)}</td>
+          <td>${s.imei}</td>
+          <td>${money(s.sellPrice)}</td>
+          <td>${money(s.buyPrice)}</td>
+          <td>${money(s.profit)}</td>
+          <td><button class="btn delete-sale" data-index="${s.originalIndex}">Eliminar</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Añadir listener para los botones de eliminar venta
+      tbody.querySelectorAll('.delete-sale').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const index = parseInt(e.currentTarget.dataset.index);
+          if (confirm('¿Eliminar este registro de venta? Esto recalculará las ganancias y marcará el teléfono como disponible.')) {
+            deleteSale(index);
+          }
+        });
+      });
+    }
+
+    // Eliminar venta por índice real en state.sales
+    function deleteSale(index) {
+      if (index >= 0 && index < state.sales.length) {
+        const deletedSale = state.sales[index];
+        // 1. Desmarcar el teléfono como vendido en el inventario (si existe y estaba marcado)
+        const phoneIndex = state.phones.findIndex(p => p.imei === deletedSale.imei && p.sold === true);
+        if (phoneIndex !== -1) {
+          state.phones[phoneIndex].sold = false;
+        }
+        // 2. Eliminar la venta
+        state.sales.splice(index, 1);
+        // 3. Guardar y actualizar todo
+        save(); renderAll();
+        notify('Venta eliminada. Teléfono marcado como disponible.');
+      }
+    }
+
+    function renderStats(){
+      const totalInvested = state.phones.reduce((sum,p)=> sum + Number(p.buyPrice||0),0);
+      const totalSales = state.sales.reduce((sum,s)=> sum + Number(s.sellPrice||0),0);
+      const totalProfit = state.sales.reduce((sum,s)=> sum + Number(s.profit||0),0);
+      $('totalInvested').textContent = money(totalInvested);
+      $('totalSales').textContent = money(totalSales);
+      $('totalProfit').textContent = money(totalProfit);
+      $('initialInvestmentDisplay').textContent = money(state.initialInvestment || 0);
+      const remaining = (Number(state.initialInvestment||0) - totalInvested);
+      $('remainingInvestment').textContent = money(remaining >= 0 ? remaining : 0);
+    }
+
+    function renderSalesChart(){
+      const monthlySales = state.sales.reduce((acc, s) => {
+        const yearMonth = s.date ? s.date.slice(0, 7) : 'Sin fecha';
+        if (!acc[yearMonth]) acc[yearMonth] = 0;
+        acc[yearMonth] += Number(s.sellPrice || 0);
+        return acc;
+      }, {});
+      const sortedMonths = Object.keys(monthlySales).sort();
+      const labels = sortedMonths.map(ym => {
+        if(ym === 'Sin fecha') return 'Sin fecha';
+        const [year, month] = ym.split('-');
+        return `${month}/${year}`;
+      });
+      const data = sortedMonths.map(ym => monthlySales[ym]);
+      const ctx = $('salesChart').getContext('2d');
+      if (salesChart) salesChart.destroy();
+      salesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Monto Total de Ventas (MXN)',
+            data: data,
+            backgroundColor: 'rgba(0, 255, 213, 0.8)',
+            borderColor: 'rgba(0, 255, 213, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(255, 255, 255, 0.08)' },
+              ticks: { color: '#e6f2ff' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#e6f2ff' }
+            }
+          },
+          plugins: { legend: { display: false }, title: { display: false } }
+        }
+      });
+    }
+
+    // --- forms / actions ---
+    $('addPhone').addEventListener('click', async ()=>{
+      const model = $('model').value.trim();
+      const imei = $('imei').value.trim();
+      const buyPrice = Number($('buyPrice').value || 0);
+      const buyDate = $('buyDate').value;
+      const note = $('note').value.trim(); // Nuevo campo de nota
+      
+      if(!model || !imei || !buyPrice) return notify('Modelo, IMEI y precio de compra son obligatorios', true);
+      
+      // prevent duplicate IMEI for active records
+      if(editIndex === -1){
+        const exists = state.phones.some(p => p.imei === imei);
+        if(exists) {
+          if(!confirm('Ya existe un registro con este IMEI. ¿Deseas continuar y añadir otro?')) return;
+        }
+      }
+
+      const files = $('photos').files;
+      const filesToRead = Array.from(files).slice(0, 5);
+      const photos = await readFilesAsDataURL(filesToRead);
+      
+      const entryBase = { model, imei, buyPrice, buyDate, photos, note, sold:false }; // Actualizado con 'note'
+
+      if(editIndex>=0){
+        // si editamos y no suben fotos, conservar las previas
+        const current = state.phones[editIndex] || {};
+        const entry = {
+          ...current,
+          model,
+          imei,
+          buyPrice,
+          buyDate,
+          note, // Actualizado con 'note'
+          photos: photos.length ? photos : (current.photos || []),
+          // preserve sold flag unless explicitly changed by selling flow
+          sold: current.sold || false
+        };
+        state.phones[editIndex] = entry;
+        editIndex = -1;
+        notify('Registro actualizado correctamente.');
+        $('addPhone').textContent = 'Registrar compra';
+      } else {
+        state.phones.push(entryBase);
+        notify('Compra registrada correctamente.');
+      }
+      save(); renderAll(); clearForm(false);
+    });
+
+    $('resetForm').addEventListener('click', ()=> clearForm(true));
+    function clearForm(showNotify = true){
+      editIndex=-1;
+      $('model').value='';
+      $('imei').value='';
+      $('buyPrice').value='';
+      $('buyDate').value='';
+      $('note').value=''; // Limpiar nota
+      $('photos').value='';
+      if(showNotify) notify('Formulario limpiado.');
+      $('addPhone').textContent = 'Registrar compra';
+    }
+
+    function populateFormForEdit(i){
+      const p = state.phones[i]; if(!p) return;
+      editIndex = i;
+      $('model').value = p.model;
+      $('imei').value = p.imei;
+      $('buyPrice').value = p.buyPrice;
+      $('buyDate').value = p.buyDate || '';
+      $('note').value = p.note || ''; // Cargar nota
+      $('addPhone').textContent = 'Actualizar registro';
+      notify('Se cargó el registro en el formulario. Subir fotos reemplazará las existentes (opcional).');
+    }
+
+    function openSellDialog(i){
+      const p = state.phones[i]; if(!p) return;
+      if(p.sold) return notify('Este teléfono ya está marcado como vendido.', true);
+      const sellPrice = prompt(`Vender ${p.model} (IMEI: ${p.imei}). Indica precio de venta en MXN:`);
+      if(sellPrice === null) return; // cancel pressed
+      if(String(sellPrice).trim() === '' || isNaN(Number(sellPrice))) return notify('Precio de venta no es un número válido', true);
+      const date = new Date().toISOString().slice(0,10);
+      const sell = {
+        date,
+        model:p.model,
+        imei:p.imei,
+        sellPrice: Number(sellPrice),
+        buyPrice: Number(p.buyPrice),
+        profit: Number(sellPrice) - Number(p.buyPrice)
+      };
+      state.sales.push(sell);
+      state.phones[i].sold = true;
+      save(); renderAll();
+      notify('Venta registrada con éxito. Ganancia calculada.');
+    }
+
+    // --- Visor de Fotos (Modal/Lightbox) ---
+    const photoModal = $('photo-modal');
+    const photoCarousel = $('photo-carousel');
+
+    function openPhotoModal(model, photos){
+      if(!photos || photos.length === 0) return;
+      $('modal-title').textContent = `Fotos de ${model}`;
+      photoCarousel.innerHTML = ''; // Limpiar carrusel
+      
+      photos.forEach(src => {
+        const div = document.createElement('div');
+        div.className = 'carousel-item';
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = `Foto de ${model}`;
+        div.appendChild(img);
+        photoCarousel.appendChild(div);
+      });
+
+      photoModal.classList.add('is-open');
+      photoModal.style.display = 'flex';
+    }
+
+    function closePhotoModal(){
+      photoModal.classList.remove('is-open');
+      setTimeout(() => { photoModal.style.display = 'none'; }, 300); // Esperar la transición
+    }
+
+    $('close-modal-btn').addEventListener('click', closePhotoModal);
+    // Cerrar al hacer clic fuera del contenido
+    photoModal.addEventListener('click', (e) => {
+      if (e.target.id === 'photo-modal') closePhotoModal();
+    });
+    // Cerrar con tecla ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && photoModal.classList.contains('is-open')) closePhotoModal();
+    });
+
+
+    // --- utils ---
+    function readFilesAsDataURL(files){
+      return new Promise(resolve => {
+        const arr = [];
+        if(!files || !files.length) return resolve([]);
+        let read = 0;
+        const filesToProcess = Array.from(files).slice(0, 5);
+        for(let f of filesToProcess){
+          const r = new FileReader();
+          r.onload = e=>{ arr.push(e.target.result); read++; if(read===filesToProcess.length) resolve(arr); }
+          r.onerror = ()=>{ read++; if(read===filesToProcess.length) resolve(arr); }
+          r.readAsDataURL(f);
+        }
+      })
+    }
+
+    function placeholderData(){
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='100%' height='100%' fill='#07101a'/><text x='50%' y='50%' fill='#1f6b5b' font-family='Arial' font-weight='700' font-size='24' text-anchor='middle' dominant-baseline='middle'>FOTO</text></svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    // --- backup/export ---
+    $('downloadBackup').addEventListener('click', ()=>{
+      const full = { ...state, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(full,null,2)],{type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'respaldo_inversion_telefonos.json'; a.click(); URL.revokeObjectURL(url);
+      notify('Respaldo JSON descargado.');
+    });
+
+    $('importFile').addEventListener('change', e=>{
+      const f = e.target.files[0]; if(!f) return;
+      const r = new FileReader(); r.onload = ev=>{
+        try{
+          const obj = JSON.parse(ev.target.result);
+          // comprobar estructura mínima
+          const safe = {
+            initialInvestment: Number(obj.initialInvestment || obj.initial || state.initialInvestment || 0),
+            phones: Array.isArray(obj.phones) ? obj.phones.map(p => ({ ...p, note: p.note || '' })) : [], // Asegurar 'note' en importación
+            sales: Array.isArray(obj.sales) ? obj.sales : []
+          };
+          state = safe;
+          save(); renderAll();
+          notify('Datos importados correctamente.');
+        }catch(err){ notify('Archivo inválido o corrupto.', true); }
+      }
+      r.readAsText(f);
+      // reset input
+      e.target.value = '';
+    });
+
+    $('clearData').addEventListener('click', ()=>{
+      if(confirm('Borrar todos los datos guardados en este navegador?')){
+        localStorage.removeItem(STORE);
+        state={initialInvestment:36760,phones:[],sales:[]};
+        save(); renderAll();
+        notify('Todos los datos han sido borrados.', true);
+      }
+    });
+
+    $('clearPhotos').addEventListener('click', ()=>{
+      if(confirm('Eliminar todas las fotos guardadas de los registros? Esto no se puede deshacer.')){
+        state.phones = state.phones.map(p=> ({...p, photos:[] }));
+        save(); renderAll();
+        notify('Fotos eliminadas del inventario.');
+      }
+    });
+
+    $('saveSettings').addEventListener('click', ()=>{ saveSettings(); });
+
+    $('initialInvestment').addEventListener('change', ()=>{
+      state.initialInvestment = Number($('initialInvestment').value || 0);
+      save(); renderAll();
+      notify('Inversión inicial actualizada.');
+    });
+
+    // export CSV of inventory + sales
+    $('exportCsv').addEventListener('click', ()=>{
+      let csv = 'tipo,fecha,modelo,imei,precio_compra,precio_venta,ganancia,estado,nota_o_descripcion\n';
+      state.phones.forEach(p=> csv += `compra,${p.buyDate||''},${escapeCsv(p.model)},${p.imei},${p.buyPrice},,,${p.sold? 'VENDIDO':'EN STOCK'},${escapeCsv(p.note)}\n`);
+      state.sales.forEach(s=> csv += `venta,${s.date},${escapeCsv(s.model)},${s.imei},${s.buyPrice},${s.sellPrice},${s.profit},VENDIDO,\n`); // La nota va en la línea de compra
+      // añadir inversión inicial al final del CSV como comentario
+      csv += `\n"Inversión inicial",${state.initialInvestment}\n`;
+      const blob = new Blob([csv],{type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='inversion_telefonos.csv'; a.click(); URL.revokeObjectURL(url);
+      notify('CSV de datos exportado.');
+    });
+
+    function escapeCsv(v){ if(v==null) return ''; return '"' + String(v).replace(/"/g,'""') + '"'; }
+    function escapeHtml(text){ if(!text) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // social links
+    function updateSocialLinks(){
+      $('igLink').href = DEFAULT_INSTAGRAM;
+      $('ttLink').href = DEFAULT_TIKTOK;
+    }
+
+    // Ensure add button label matches state
+    function updateAddButtonState(){
+      if(editIndex >= 0) $('addPhone').textContent = 'Actualizar registro';
+      else $('addPhone').textContent = 'Registrar compra';
+    }
+
+    // init
+    load();
+  </script>
+</body>
+</html>
